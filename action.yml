@@ -1,0 +1,71 @@
+name: JamPeter Quality Gate
+description: Run a repository-declared JamPeter Quality Gate contract and verify the resulting report.
+author: JamPeter
+
+inputs:
+  config:
+    description: Path to the quality gate TOML file in the consumer repository.
+    required: false
+    default: .jampeter/quality-gate.toml
+  install-tools:
+    description: Optional pip packages required by the declared gates, for example "ruff".
+    required: false
+    default: ""
+  fix-safe:
+    description: Run only repository-declared safe fixes before verification.
+    required: false
+    default: "false"
+
+outputs:
+  report:
+    description: Path to the generated quality report.
+    value: ${{ steps.run-gate.outputs.report }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install Quality Gate
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -m pip install --disable-pip-version-check "${{ github.action_path }}"
+
+    - name: Install declared gate tools
+      if: inputs.install-tools != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 -m pip install --disable-pip-version-check ${{ inputs.install-tools }}
+
+    - name: Run Quality Gate
+      id: run-gate
+      shell: bash
+      env:
+        QUALITY_GATE_CONFIG: ${{ inputs.config }}
+        QUALITY_GATE_FIX_SAFE: ${{ inputs.fix-safe }}
+      run: |
+        set -euo pipefail
+
+        report_path="$(
+          python3 - "$QUALITY_GATE_CONFIG" <<'PY'
+import sys
+import tomllib
+
+path = sys.argv[1]
+with open(path, "rb") as fh:
+    data = tomllib.load(fh)
+print(data.get("report", {}).get("path", ".quality-gate/report.json"))
+PY
+        )"
+
+        args=(run --config "$QUALITY_GATE_CONFIG")
+        if [[ "$QUALITY_GATE_FIX_SAFE" == "true" ]]; then
+          args+=(--fix-safe)
+        fi
+
+        quality-gate "${args[@]}"
+        quality-gate verify-report \
+          --report "$report_path" \
+          --config "$QUALITY_GATE_CONFIG"
+
+        echo "report=$report_path" >> "$GITHUB_OUTPUT"
