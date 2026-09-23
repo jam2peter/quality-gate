@@ -73,12 +73,13 @@ def git_state(repo: Path, exclude: set[str] | None = None) -> dict[str, Any]:
     root = repository_root(repo)
 
     head = os.fsdecode(git(root, "rev-parse", "HEAD").stdout).strip()
-    status = git(
+    working_diff = git(
         root,
-        "status",
-        "--porcelain=v1",
-        "-z",
-        "--untracked-files=all",
+        "diff",
+        "HEAD",
+        "--binary",
+        "--no-ext-diff",
+        "--full-index",
     ).stdout
     index_diff = git(
         root,
@@ -127,7 +128,7 @@ def git_state(repo: Path, exclude: set[str] | None = None) -> dict[str, Any]:
 
     state = {
         "head": head,
-        "status_sha256": sha256_bytes(status),
+        "working_diff_sha256": sha256_bytes(working_diff),
         "index_sha256": sha256_bytes(index_diff),
         "paths": paths,
     }
