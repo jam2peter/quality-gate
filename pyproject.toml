@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jampeter-quality-gate"
+version = "0.1.0"
+description = "Machine-readable fail-closed quality gates for Git work"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [{name = "JamPeter"}]
+dependencies = []
+
+[project.scripts]
+quality-gate = "quality_gate.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

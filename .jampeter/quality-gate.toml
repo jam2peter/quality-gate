@@ -1,0 +1,36 @@
+version = 1
+profile = "quality-gate-self"
+
+[report]
+path = ".quality-gate/report.json"
+
+[[gate]]
+id = "format"
+phase = "format"
+command = "ruff format --check src tests"
+required = true
+safe_fix = "ruff format src tests"
+
+[[gate]]
+id = "lint"
+phase = "lint"
+command = "ruff check src tests"
+required = true
+
+[[gate]]
+id = "compile"
+phase = "type"
+command = "python3 -m compileall -q src tests"
+required = true
+
+[[gate]]
+id = "tests"
+phase = "test"
+command = "PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -v"
+required = true
+
+[[gate]]
+id = "package"
+phase = "build"
+command = "python3 -m pip wheel . --no-deps -w /tmp/quality-gate-wheel >/dev/null"
+required = true

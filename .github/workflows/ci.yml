@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install test tools
+        run: python3 -m pip install ruff .
+
+      - name: Unit tests
+        run: PYTHONPATH=src python3 -m unittest discover -s tests -p 'test_*.py' -v
+
+      - name: Self-hosted Quality Gate
+        run: quality-gate run --config .jampeter/quality-gate.toml
+
+      - name: Verify generated report
+        run: quality-gate verify-report --report .quality-gate/report.json --config .jampeter/quality-gate.toml
+
+      - name: Public sanitization scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RInE '/home/jam|JamPeter-Infrastructure|jha-auto-checkpoint|lab\.jampeter\.com\.br|192\.168\.'             --exclude-dir=.git --exclude=ci.yml .
+          ! grep -RInE '(ghp_|github_pat_|AIza[0-9A-Za-z_-]{20,}|BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY)'             --exclude-dir=.git --exclude=ci.yml .
