@@ -16,7 +16,7 @@ Example:
   "config_sha256": "...",
   "git_state": {
     "head": "...",
-    "status_sha256": "...",
+    "working_diff_sha256": "...",
     "index_sha256": "...",
     "fingerprint": "...",
     "paths": [
