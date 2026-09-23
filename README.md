@@ -93,6 +93,39 @@ A failed test or security gate is **not** auto-fixed unless the repository
 explicitly declared a `safe_fix` command for that gate. Do not declare semantic
 repairs as safe fixes.
 
+## GitHub Action
+
+Consumer repositories can run the same contract in CI with:
+
+```yaml
+- uses: actions/checkout@v4
+
+- uses: jam2peter/quality-gate@v0
+  with:
+    config: .jampeter/quality-gate.toml
+    install-tools: ruff
+```
+
+The action:
+
+1. installs the Quality Gate CLI from the pinned action reference;
+2. optionally installs declared Python gate tools;
+3. runs the repository contract;
+4. verifies the generated report against the current Git state.
+
+Safe fixes are **off by default**. To enable only repository-declared safe fixes:
+
+```yaml
+- uses: jam2peter/quality-gate@v0
+  with:
+    config: .jampeter/quality-gate.toml
+    install-tools: ruff
+    fix-safe: "true"
+```
+
+Do not enable `fix-safe` in protected CI unless the workflow is intentionally
+allowed to modify its ephemeral checkout.
+
 ## Verify a report
 
 ```bash

@@ -27,6 +27,12 @@ jobs:
       - name: Verify generated report
         run: quality-gate verify-report --report .quality-gate/report.json --config .jampeter/quality-gate.toml
 
+      - name: Composite action smoke
+        uses: ./
+        with:
+          config: .jampeter/quality-gate.toml
+          install-tools: ruff
+
       - name: Public sanitization scan
         shell: bash
         run: |
