@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 import tempfile
 import textwrap
@@ -16,8 +15,7 @@ def command(*args: str, cwd: Path | None = None) -> subprocess.CompletedProcess[
         args,
         cwd=cwd,
         text=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=True,
     )
 
