@@ -46,17 +46,7 @@ runs:
       run: |
         set -euo pipefail
 
-        report_path="$(
-          python3 - "$QUALITY_GATE_CONFIG" <<'PY'
-import sys
-import tomllib
-
-path = sys.argv[1]
-with open(path, "rb") as fh:
-    data = tomllib.load(fh)
-print(data.get("report", {}).get("path", ".quality-gate/report.json"))
-PY
-        )"
+        report_path="$(python3 -c 'import sys,tomllib; d=tomllib.load(open(sys.argv[1],"rb")); print(d.get("report",{}).get("path",".quality-gate/report.json"))' "$QUALITY_GATE_CONFIG")"
 
         args=(run --config "$QUALITY_GATE_CONFIG")
         if [[ "$QUALITY_GATE_FIX_SAFE" == "true" ]]; then
