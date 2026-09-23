@@ -10,7 +10,7 @@ import sys
 import time
 import tomllib
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -47,11 +47,12 @@ def sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
-def git(repo: Path, *args: str, check: bool = True) -> subprocess.CompletedProcess[bytes]:
+def git(
+    repo: Path, *args: str, check: bool = True
+) -> subprocess.CompletedProcess[bytes]:
     return subprocess.run(
         ["git", "-C", str(repo), *args],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        capture_output=True,
         check=check,
     )
 
@@ -100,11 +101,7 @@ def git_state(repo: Path, exclude: set[str] | None = None) -> dict[str, Any]:
     ).stdout
 
     paths: list[dict[str, str]] = []
-    names = sorted({
-        os.fsdecode(item)
-        for item in paths_raw.split(b"\0")
-        if item
-    })
+    names = sorted({os.fsdecode(item) for item in paths_raw.split(b"\0") if item})
     for rel in names:
         rel_posix = Path(rel).as_posix()
         if rel_posix in exclude:
@@ -205,7 +202,7 @@ def load_config(path: Path) -> tuple[dict[str, Any], list[Gate], str]:
 
 def run_command(command: str, repo: Path) -> tuple[int, int]:
     started = time.monotonic()
-    proc = subprocess.run(command, cwd=repo, shell=True)
+    proc = subprocess.run(command, cwd=repo, shell=True, check=False)
     duration_ms = int((time.monotonic() - started) * 1000)
     return proc.returncode, duration_ms
 
@@ -292,7 +289,7 @@ def run_quality_gate(
         "tool": "JamPeter Quality Gate",
         "tool_version": __version__,
         "profile": config.get("profile", "custom"),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "result": result,
         "warnings": warnings,
         "required_failures": required_failures,
@@ -392,7 +389,9 @@ def main(argv: list[str] | None = None) -> int:
                 if isinstance(config.get("report"), dict)
                 else None
             )
-            report_value = args.report or configured_report or ".quality-gate/report.json"
+            report_value = (
+                args.report or configured_report or ".quality-gate/report.json"
+            )
             report_path = Path(report_value)
             if not report_path.is_absolute():
                 report_path = repo / report_path
